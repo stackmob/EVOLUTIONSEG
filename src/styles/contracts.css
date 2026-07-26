@@ -1,0 +1,27 @@
+.contract-alert-card {
+  border-left: 4px solid var(--color-danger);
+  background-color: #fef2f2;
+}
+
+.contract-alert-card-warning {
+  border-left: 4px solid var(--color-warning);
+  background-color: #fffbeb;
+}
+
+.contract-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contract-meta-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  border-bottom: 1px dashed var(--color-border);
+  padding-bottom: 0.25rem;
+}
+
+.contract-meta-item:last-child {
+  border-bottom: none;
+}

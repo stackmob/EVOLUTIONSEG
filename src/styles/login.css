@@ -1,0 +1,46 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-primary-dark);
+  padding: 1.5rem;
+  background-image: radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 40%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 26rem;
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 2.25rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.login-logo-shield {
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
+}
+
+.login-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-primary);
+}
+
+.login-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: 0.25rem;
+}

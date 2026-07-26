@@ -1,0 +1,79 @@
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--color-card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.table-element {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.table-thead {
+  background-color: var(--color-bg-light);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.table-th {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.table-tr {
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.15s ease;
+}
+
+.table-tr:hover {
+  background-color: rgba(245, 158, 11, 0.03); /* subtle gold accent tint on hover */
+}
+
+.table-td {
+  padding: 0.875rem 1rem;
+  vertical-align: middle;
+  color: var(--color-text-main);
+}
+
+.table-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.table-badge-success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.table-badge-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.table-badge-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.table-badge-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.table-badge-gray {
+  background-color: #f3f4f6;
+  color: #374151;
+}

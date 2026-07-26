@@ -1,0 +1,6 @@
+{
+  "name": "EvolutionSeg SaaS",
+  "description": "Plataforma SaaS Multi-Tenant de Gestão Operacional de Segurança Privada, Escalas e Patrimônio",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

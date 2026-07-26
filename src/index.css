@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+/* Import modular styling components */
+@import "./styles/global.css";
+@import "./styles/variables.css";
+@import "./styles/buttons.css";
+@import "./styles/cards.css";
+@import "./styles/contracts.css";
+@import "./styles/dashboard.css";
+@import "./styles/employees.css";
+@import "./styles/forms.css";
+@import "./styles/login.css";
+@import "./styles/navbar.css";
+@import "./styles/sidebar.css";
+@import "./styles/tables.css";
+@import "./styles/assets.css";
+
+@theme {
+  --font-heading: "Space Grotesk", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-accent: #10b981;
+  --color-accent-hover: #059669;
+  --color-accent-light: rgba(16, 185, 129, 0.1);
+}
+
+/* HIGH CONTRAST THEME ROOT CONFIGURATIONS */
+html.dark body {
+  background-color: #030712;
+  color: #f8fafc;
+}
+
+html.light body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* LIGHT THEME HIGH CONTRAST OVERRIDES */
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+html.light .glass-card {
+  background: #ffffff;
+  backdrop-filter: none;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
+}
+
+html.light .glass-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: #10b981;
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.15);
+}
+
+html.light .text-slate-100,
+html.light .text-slate-200,
+html.light .text-white {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-300,
+html.light .text-slate-400 {
+  color: #334155 !important;
+}
+
+html.light .text-slate-500 {
+  color: #475569 !important;
+}
+
+html.light .bg-slate-950,
+html.light .bg-slate-900 {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-slate-900\/90,
+html.light .bg-slate-900\/80,
+html.light .bg-slate-900\/60 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .border-slate-800,
+html.light .border-slate-800\/80,
+html.light .border-slate-900 {
+  border-color: #cbd5e1 !important;
+}
+
+/* DARK THEME HIGH CONTRAST UTILITIES */
+html.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+html.dark .glass-card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.2);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.8);
+}
