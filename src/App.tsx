@@ -24,17 +24,15 @@ import { UsersManagement } from './pages/UsersManagement';
 
 const AppContent: React.FC = () => {
   const { user } = useAuth();
-  const { currentTenant } = useTenant();
+  const { hasRealTenant } = useTenant();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   
   // Tracking detailed references clicked from global search or alerts
   const [openDetailId, setOpenDetailId] = useState<{ type: string; id: string } | null>(null);
+  const [onboardingDone, setOnboardingDone] = useState(false);
 
-  // Check if newly logged in user needs company onboarding
-  const [showCompanyOnboarding, setShowCompanyOnboarding] = useState<boolean>(() => {
-    const hasCompanyConfig = localStorage.getItem('saas_current_tenant_id');
-    return !hasCompanyConfig;
-  });
+  // Show onboarding if user is logged in but has no real company registered
+  const showCompanyOnboarding = !onboardingDone && !hasRealTenant;
 
   if (!user) {
     return <Login />;
@@ -44,7 +42,7 @@ const AppContent: React.FC = () => {
     <>
       <CompanyOnboardingModal
         isOpen={showCompanyOnboarding}
-        onComplete={() => setShowCompanyOnboarding(false)}
+        onComplete={() => setOnboardingDone(true)}
       />
 
       <DashboardLayout 

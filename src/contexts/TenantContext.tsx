@@ -3,50 +3,65 @@ import { Tenant, SaasPlan, SaasInvoice } from '../types';
 import toast from 'react-hot-toast';
 
 interface TenantContextType {
-  currentTenant: Tenant;
+  currentTenant: Tenant | null;
   tenantsList: Tenant[];
+  hasRealTenant: boolean;
   switchTenant: (tenantId: string) => void;
   updatePlan: (newPlan: SaasPlan, billingCycle: 'mensal' | 'anual') => void;
   invoices: SaasInvoice[];
   registerNewTenant: (name: string, cnpj: string, ownerName: string, ownerEmail: string, plan: SaasPlan) => void;
 }
 
-const DEFAULT_TENANTS: Tenant[] = [];
-
 const INITIAL_INVOICES: SaasInvoice[] = [];
+
+// Known mock tenant IDs from older builds that must be purged
+const MOCK_TENANT_IDS = ['tnt-1', 'tnt-2', 'tnt-3', 'tnt-default'];
+
+function loadCleanTenantsList(): Tenant[] {
+  try {
+    const saved = localStorage.getItem('saas_tenants_list');
+    if (!saved) return [];
+    const parsed: Tenant[] = JSON.parse(saved);
+    // Filter out any leftover mock/demo tenants from previous builds
+    const real = parsed.filter(t => !MOCK_TENANT_IDS.includes(t.id));
+    return real;
+  } catch {
+    return [];
+  }
+}
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tenantsList, setTenantsList] = useState<Tenant[]>(() => {
-    const saved = localStorage.getItem('saas_tenants_list');
-    return saved ? JSON.parse(saved) : DEFAULT_TENANTS;
+    const clean = loadCleanTenantsList();
+    // If mock data was purged, also clear the stale current-tenant pointer
+    const savedList = localStorage.getItem('saas_tenants_list');
+    if (savedList) {
+      const parsed: Tenant[] = JSON.parse(savedList);
+      const hadMocks = parsed.some(t => MOCK_TENANT_IDS.includes(t.id));
+      if (hadMocks) {
+        localStorage.removeItem('saas_current_tenant_id');
+        localStorage.removeItem('saas_invoices');
+      }
+    }
+    return clean;
   });
 
-  const [currentTenant, setCurrentTenant] = useState<Tenant>(() => {
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(() => {
     const savedId = localStorage.getItem('saas_current_tenant_id');
-    const found = tenantsList.find(t => t.id === savedId);
-    return found || tenantsList[0] || {
-      id: 'tnt-default',
-      name: 'Empresa Principal',
-      cnpj: '00.000.000/0001-00',
-      subdomain: 'empresa',
-      plan: 'Pro',
-      billingCycle: 'mensal',
-      status: 'Ativo',
-      maxEmployees: 100,
-      maxClients: 50,
-      maxAssets: 200,
-      createdAt: new Date().toISOString().split('T')[0],
-      renewsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      ownerName: 'Administrador',
-      ownerEmail: 'admin@empresa.com',
-    };
+    const initialList = loadCleanTenantsList();
+    const found = initialList.find(t => t.id === savedId);
+    return found || initialList[0] || null;
   });
 
   const [invoices, setInvoices] = useState<SaasInvoice[]>(() => {
-    const saved = localStorage.getItem('saas_invoices');
-    return saved ? JSON.parse(saved) : INITIAL_INVOICES;
+    try {
+      const saved = localStorage.getItem('saas_invoices');
+      return saved ? JSON.parse(saved) : INITIAL_INVOICES;
+    } catch {
+      return INITIAL_INVOICES;
+    }
   });
 
   useEffect(() => {
@@ -63,15 +78,21 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     localStorage.setItem('saas_invoices', JSON.stringify(invoices));
   }, [invoices]);
 
+  const hasRealTenant = tenantsList.length > 0;
+
   const switchTenant = (tenantId: string) => {
     const target = tenantsList.find(t => t.id === tenantId);
     if (target) {
       setCurrentTenant(target);
-      toast.success(`Contexto SaaS alternado para: ${target.name}`);
+      toast.success(`Contexto alternado para: ${target.name}`);
     }
   };
 
   const updatePlan = (newPlan: SaasPlan, billingCycle: 'mensal' | 'anual') => {
+    if (!currentTenant) {
+      toast.error('Nenhuma empresa ativa. Cadastre sua empresa primeiro.');
+      return;
+    }
     let maxEmployees = 10;
     let maxClients = 3;
     let maxAssets = 15;
@@ -163,6 +184,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     <TenantContext.Provider value={{
       currentTenant,
       tenantsList,
+      hasRealTenant,
       switchTenant,
       updatePlan,
       invoices,
