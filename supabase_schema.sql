@@ -237,7 +237,7 @@ CREATE TABLE IF NOT EXISTS public.app_notifications (
   created_at TEXT NOT NULL
 );
 
--- HABILITAR ROW LEVEL SECURITY (RLS) PARA ISOLAMENTO MULTI-TENANT POR EMPRESA
+-- HABILITAR ROW LEVEL SECURITY (RLS) PARA ISOLAMENTO MULTI-TENANT EM TODAS AS TABELAS
 ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.employees ENABLE ROW LEVEL SECURITY;
@@ -252,8 +252,83 @@ ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.employee_occurrences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_notifications ENABLE ROW LEVEL SECURITY;
 
--- CRIAR POLÍTICAS DE RLS REUTILIZÁVEIS (Acesso permitido apenas se tenant_id for igual ao claim do JWT ou usuário anonimizado/demo)
-CREATE POLICY IF NOT EXISTS "Multi-tenant Isolation: Employees" ON public.employees FOR ALL USING (tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id));
-CREATE POLICY IF NOT EXISTS "Multi-tenant Isolation: Clients" ON public.clients FOR ALL USING (tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id));
-CREATE POLICY IF NOT EXISTS "Multi-tenant Isolation: Contracts" ON public.contracts FOR ALL USING (tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id));
-CREATE POLICY IF NOT EXISTS "Multi-tenant Isolation: Assets" ON public.assets FOR ALL USING (tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id));
+-- -----------------------------------------------------------------------------
+-- POLÍTICAS DE SEGURANÇA RLS (ROW LEVEL SECURITY)
+-- Permite leitura e escrita isolada por tenant (empresa) com suporte a JWT/Anon
+-- -----------------------------------------------------------------------------
+
+-- 0. Tenants
+DROP POLICY IF EXISTS "Multi-tenant RLS: Tenants" ON public.tenants;
+CREATE POLICY "Multi-tenant RLS: Tenants" ON public.tenants FOR ALL USING (true);
+
+-- 1. Users
+DROP POLICY IF EXISTS "Multi-tenant RLS: Users" ON public.users;
+CREATE POLICY "Multi-tenant RLS: Users" ON public.users FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 2. Employees
+DROP POLICY IF EXISTS "Multi-tenant RLS: Employees" ON public.employees;
+CREATE POLICY "Multi-tenant RLS: Employees" ON public.employees FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 3. Clients
+DROP POLICY IF EXISTS "Multi-tenant RLS: Clients" ON public.clients;
+CREATE POLICY "Multi-tenant RLS: Clients" ON public.clients FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 4. Contracts
+DROP POLICY IF EXISTS "Multi-tenant RLS: Contracts" ON public.contracts;
+CREATE POLICY "Multi-tenant RLS: Contracts" ON public.contracts FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 5. Scale Allocations
+DROP POLICY IF EXISTS "Multi-tenant RLS: Scale Allocations" ON public.scale_allocations;
+CREATE POLICY "Multi-tenant RLS: Scale Allocations" ON public.scale_allocations FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 6. Providers
+DROP POLICY IF EXISTS "Multi-tenant RLS: Providers" ON public.providers;
+CREATE POLICY "Multi-tenant RLS: Providers" ON public.providers FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 7. Assets
+DROP POLICY IF EXISTS "Multi-tenant RLS: Assets" ON public.assets;
+CREATE POLICY "Multi-tenant RLS: Assets" ON public.assets FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 8. Asset Allocations
+DROP POLICY IF EXISTS "Multi-tenant RLS: Asset Allocations" ON public.asset_allocations;
+CREATE POLICY "Multi-tenant RLS: Asset Allocations" ON public.asset_allocations FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 9. Maintenances
+DROP POLICY IF EXISTS "Multi-tenant RLS: Maintenances" ON public.maintenances;
+CREATE POLICY "Multi-tenant RLS: Maintenances" ON public.maintenances FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 10. Audit Logs
+DROP POLICY IF EXISTS "Multi-tenant RLS: Audit Logs" ON public.audit_logs;
+CREATE POLICY "Multi-tenant RLS: Audit Logs" ON public.audit_logs FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 11. Employee Occurrences
+DROP POLICY IF EXISTS "Multi-tenant RLS: Employee Occurrences" ON public.employee_occurrences;
+CREATE POLICY "Multi-tenant RLS: Employee Occurrences" ON public.employee_occurrences FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);
+
+-- 12. App Notifications
+DROP POLICY IF EXISTS "Multi-tenant RLS: App Notifications" ON public.app_notifications;
+CREATE POLICY "Multi-tenant RLS: App Notifications" ON public.app_notifications FOR ALL USING (
+  tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id)
+);

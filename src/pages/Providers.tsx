@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../services/db';
 import { Provider } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { Factory, Search, Plus, Eye, Edit, Trash2, X, Globe, Star } from 'lucide-react';
+import { Factory, Search, Plus, Eye, Edit, Trash2, X, Globe, Star, FileText, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { uploadDocument, DocumentMetadata } from '../services/storage';
+import { DocumentViewerModal } from '../components/DocumentViewerModal';
 
 export const Providers: React.FC = () => {
   const { user: loggedUser, role: loggedRole, hasPermission } = useAuth();
@@ -14,6 +16,7 @@ export const Providers: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  const [activeViewDoc, setActiveViewDoc] = useState<DocumentMetadata | null>(null);
 
   // Form Fields
   const [formName, setFormName] = useState('');
@@ -23,6 +26,7 @@ export const Providers: React.FC = () => {
   const [formAddress, setFormAddress] = useState('');
   const [formService, setFormService] = useState('Armamento e Munição');
   const [formNotes, setFormNotes] = useState('');
+  const [formDocUrl, setFormDocUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadProviders();
@@ -42,6 +46,7 @@ export const Providers: React.FC = () => {
       setFormAddress(prv.address || '');
       setFormService(prv.serviceProvided);
       setFormNotes(prv.notes || '');
+      setFormDocUrl(undefined);
     } else {
       setEditingProvider(null);
       setFormName('');
@@ -51,6 +56,7 @@ export const Providers: React.FC = () => {
       setFormAddress('');
       setFormService('Armamento e Munição');
       setFormNotes('');
+      setFormDocUrl(undefined);
     }
     setShowForm(true);
   };
@@ -365,6 +371,39 @@ export const Providers: React.FC = () => {
                 <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={3} className="form-input resize-none" placeholder="Ex: Entrega de munição em até 10 dias..."></textarea>
               </div>
 
+              <div>
+                <label className="form-label text-xxs font-semibold block mb-1">Certidões / Contrato de Fornecimento (PDF / Imagem)</label>
+                <label className={`w-full p-2.5 border rounded-lg flex items-center justify-between cursor-pointer transition-all hover:border-blue-400 ${
+                  formDocUrl ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600'
+                }`}>
+                  <span className="flex items-center gap-2 text-xs">
+                    <Upload className="w-4 h-4 text-blue-600" />
+                    <span>{formDocUrl ? 'Documento do Fornecedor Anexado' : 'Clique para Escolher Arquivo de Homologação'}</span>
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-xxxxs ${formDocUrl ? 'bg-emerald-200 text-emerald-900 font-bold' : 'bg-gray-200 text-gray-500'}`}>
+                    {formDocUrl ? 'Anexado' : 'Selecionar'}
+                  </span>
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        toast.loading('Enviando certidão/contrato...', { id: 'upload-prv-doc' });
+                        try {
+                          const meta = await uploadDocument(file, 'providers');
+                          setFormDocUrl(meta.fileUrl);
+                          toast.success('Documento do fornecedor anexado!', { id: 'upload-prv-doc' });
+                        } catch (err) {
+                          toast.error('Erro ao enviar documento.', { id: 'upload-prv-doc' });
+                        }
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                 <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary cursor-pointer">Cancelar</button>
                 <button type="submit" className="btn btn-primary cursor-pointer text-white bg-blue-600 hover:bg-blue-700 font-bold px-6">Homologar Fornecedor</button>
@@ -374,6 +413,12 @@ export const Providers: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* DOCUMENT VIEWER MODAL */}
+      <DocumentViewerModal
+        document={activeViewDoc}
+        onClose={() => setActiveViewDoc(null)}
+      />
 
     </div>
   );

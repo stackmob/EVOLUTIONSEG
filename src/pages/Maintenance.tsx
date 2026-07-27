@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../services/db';
 import { Asset } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { Wrench, Plus, Check, X, ShieldAlert, DollarSign, Calendar, AlertCircle } from 'lucide-react';
+import { Wrench, Plus, Check, X, ShieldAlert, DollarSign, Calendar, AlertCircle, FileText, Upload, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { uploadDocument, DocumentMetadata } from '../services/storage';
+import { DocumentViewerModal } from '../components/DocumentViewerModal';
 
 export interface MaintenanceRecord {
   id: string;
@@ -18,6 +20,7 @@ export interface MaintenanceRecord {
   cost: number;
   status: 'Pendente' | 'Concluído';
   returnDate?: string;
+  osDocumentUrl?: string;
   createdAt: string;
 }
 
@@ -29,6 +32,7 @@ export const Maintenance: React.FC = () => {
   const [maintenances, setMaintenances] = useState<MaintenanceRecord[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [activeViewDoc, setActiveViewDoc] = useState<DocumentMetadata | null>(null);
 
   // Form Fields
   const [formAssetId, setFormAssetId] = useState('');
@@ -38,6 +42,7 @@ export const Maintenance: React.FC = () => {
   const [formStartDate, setFormStartDate] = useState('');
   const [formExpectedReturn, setFormExpectedReturn] = useState('');
   const [formCost, setFormCost] = useState(150);
+  const [formOsDocumentUrl, setFormOsDocumentUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadData();
@@ -63,6 +68,7 @@ export const Maintenance: React.FC = () => {
     setFormExpectedReturn(oneWeekLater.toISOString().split('T')[0]);
     
     setFormCost(200);
+    setFormOsDocumentUrl(undefined);
     setShowForm(true);
   };
 
@@ -91,6 +97,7 @@ export const Maintenance: React.FC = () => {
       expectedReturnDate: formExpectedReturn,
       cost: Number(formCost),
       status: 'Pendente',
+      osDocumentUrl: formOsDocumentUrl,
       createdAt: new Date().toISOString(),
     };
 
@@ -292,6 +299,39 @@ export const Maintenance: React.FC = () => {
                 <textarea value={formDescription} onChange={e => setFormDescription(e.target.value)} rows={3} className="form-input resize-none" placeholder="Informe o laudo técnico inicial..." required></textarea>
               </div>
 
+              <div>
+                <label className="form-label text-xxs font-semibold block mb-1">Documento da OS / Nota Fiscal (PDF / Imagem)</label>
+                <label className={`w-full p-2.5 border rounded-lg flex items-center justify-between cursor-pointer transition-all hover:border-blue-400 ${
+                  formOsDocumentUrl ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600'
+                }`}>
+                  <span className="flex items-center gap-2 text-xs">
+                    <Upload className="w-4 h-4 text-blue-600" />
+                    <span>{formOsDocumentUrl ? 'OS / Nota Fiscal Anexada' : 'Clique para Escolher Arquivo da OS / NF'}</span>
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-xxxxs ${formOsDocumentUrl ? 'bg-emerald-200 text-emerald-900 font-bold' : 'bg-gray-200 text-gray-500'}`}>
+                    {formOsDocumentUrl ? 'Anexado' : 'Selecionar'}
+                  </span>
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        toast.loading('Enviando documento da OS...', { id: 'upload-mnt-os' });
+                        try {
+                          const meta = await uploadDocument(file, 'maintenance');
+                          setFormOsDocumentUrl(meta.fileUrl);
+                          toast.success('Documento da OS anexado!', { id: 'upload-mnt-os' });
+                        } catch (err) {
+                          toast.error('Erro ao enviar documento.', { id: 'upload-mnt-os' });
+                        }
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                 <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary cursor-pointer">Cancelar</button>
                 <button type="submit" className="btn btn-primary cursor-pointer text-white bg-blue-600 hover:bg-blue-700 font-bold px-6">Registrar OS</button>
@@ -301,6 +341,12 @@ export const Maintenance: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* DOCUMENT VIEWER MODAL */}
+      <DocumentViewerModal
+        document={activeViewDoc}
+        onClose={() => setActiveViewDoc(null)}
+      />
 
     </div>
   );

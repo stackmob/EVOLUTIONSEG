@@ -4,9 +4,10 @@ import { Employee, EmployeeOccurrence, Client } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Calendar, User, Plus, Edit2, Clock, FileText, CheckCircle, 
-  AlertCircle, AlertTriangle, ChevronDown, X, ShieldAlert, TrendingUp, RefreshCw, Send
+  AlertCircle, AlertTriangle, ChevronDown, X, ShieldAlert, TrendingUp, RefreshCw, Send, Upload
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { uploadDocument } from '../services/storage';
 
 interface EmployeeOccurrencesProps {
   employee: Employee;
@@ -797,22 +798,38 @@ export const EmployeeOccurrences: React.FC<EmployeeOccurrencesProps> = ({ employ
 
               {/* General Fields: Attachments & Notes */}
               <div>
-                <label className="form-label text-xxs font-semibold">Simular Documento Anexo (Nome do PDF/Imagem)</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    value={attachmentName} 
-                    onChange={e => setAttachmentName(e.target.value)} 
-                    className="form-input" 
-                    placeholder="atestado_medico.pdf, advertencia_assinada.pdf, etc."
-                  />
-                  <button 
-                    type="button" 
-                    onClick={() => setAttachmentName(`anexo_doc_${Date.now()}.pdf`)}
-                    className="absolute right-2 top-2 text-xxs text-blue-600 hover:text-blue-700 font-bold cursor-pointer"
-                  >
-                    Auto-Anexar
-                  </button>
+                <label className="form-label text-xxs font-semibold">Documento Anexo (PDF / Imagem)</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input 
+                      type="text" 
+                      value={attachmentName} 
+                      onChange={e => setAttachmentName(e.target.value)} 
+                      className="form-input" 
+                      placeholder="atestado_medico.pdf, advertencia_assinada.pdf, etc."
+                    />
+                  </div>
+                  <label className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors">
+                    <Upload className="w-4 h-4 text-white" /> Escolher Arquivo
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          toast.loading('Enviando anexo...', { id: 'upload-occ-file' });
+                          try {
+                            const meta = await uploadDocument(file, 'occurrences');
+                            setAttachmentName(meta.fileName);
+                            toast.success(`Arquivo "${meta.fileName}" anexado!`, { id: 'upload-occ-file' });
+                          } catch (err) {
+                            toast.error('Erro ao enviar arquivo.', { id: 'upload-occ-file' });
+                          }
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
 

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../services/db';
 import { Client } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { Briefcase, Search, Plus, Eye, Edit, Trash2, X, ShieldAlert, Check, User, Phone, MapPin, ChevronRight, ChevronLeft, FileText } from 'lucide-react';
+import { Briefcase, Search, Plus, Eye, Edit, Trash2, X, ShieldAlert, Check, User, Phone, MapPin, ChevronRight, ChevronLeft, FileText, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { uploadDocument, DocumentMetadata } from '../services/storage';
+import { DocumentViewerModal } from '../components/DocumentViewerModal';
 
 interface ClientsProps {
   openDetailId: { type: string; id: string } | null;
@@ -30,6 +32,8 @@ export const Clients: React.FC<ClientsProps> = ({ openDetailId, setOpenDetailId 
   const [formDocument, setFormDocument] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formEmail, setFormEmail] = useState('');
+  const [activeViewDoc, setActiveViewDoc] = useState<DocumentMetadata | null>(null);
+  const [formDocUrl, setFormDocUrl] = useState<string | undefined>(undefined);
   const [formResponsible, setFormResponsible] = useState('');
   const [formResponsiblePhone, setFormResponsiblePhone] = useState('');
   const [formAddress, setFormAddress] = useState('');
@@ -559,6 +563,39 @@ export const Clients: React.FC<ClientsProps> = ({ openDetailId, setOpenDetailId 
                     <label className="form-label text-xxs font-semibold">Instruções Operacionais Especiais</label>
                     <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={3} className="form-input resize-none" placeholder="Perímetros de rondas, restrição de acesso..."></textarea>
                   </div>
+
+                  <div>
+                    <label className="form-label text-xxs font-semibold block mb-1">Cartão CNPJ / Contrato Social da Empresa (PDF / Imagem)</label>
+                    <label className={`w-full p-2.5 border rounded-lg flex items-center justify-between cursor-pointer transition-all hover:border-blue-400 ${
+                      formDocUrl ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600'
+                    }`}>
+                      <span className="flex items-center gap-2 text-xs">
+                        <Upload className="w-4 h-4 text-blue-600" />
+                        <span>{formDocUrl ? 'Documento da Empresa Anexado' : 'Clique para Escolher Cartão CNPJ / Contrato Social'}</span>
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-xxxxs ${formDocUrl ? 'bg-emerald-200 text-emerald-900 font-bold' : 'bg-gray-200 text-gray-500'}`}>
+                        {formDocUrl ? 'Anexado' : 'Selecionar'}
+                      </span>
+                      <input
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            toast.loading('Enviando documento do cliente...', { id: 'upload-cli-doc' });
+                            try {
+                              const meta = await uploadDocument(file, 'clients');
+                              setFormDocUrl(meta.fileUrl);
+                              toast.success('Documento do cliente anexado!', { id: 'upload-cli-doc' });
+                            } catch (err) {
+                              toast.error('Erro ao enviar documento.', { id: 'upload-cli-doc' });
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
               )}
 
@@ -600,6 +637,12 @@ export const Clients: React.FC<ClientsProps> = ({ openDetailId, setOpenDetailId 
           </div>
         </div>
       )}
+
+      {/* DOCUMENT VIEWER MODAL */}
+      <DocumentViewerModal
+        document={activeViewDoc}
+        onClose={() => setActiveViewDoc(null)}
+      />
 
     </div>
   );

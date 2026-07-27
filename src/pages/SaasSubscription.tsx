@@ -5,9 +5,10 @@ import { SaasPlan } from '../types';
 import { 
   CreditCard, Shield, CheckCircle2, Zap, Building2, Users, 
   Briefcase, Package, ArrowUpRight, Plus, Download, Sparkles, 
-  HelpCircle, Clock, AlertCircle, RefreshCw, Layers
+  HelpCircle, Clock, AlertCircle, RefreshCw, Layers, Upload
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { uploadDocument } from '../services/storage';
 
 export const SaasSubscription: React.FC = () => {
   const { currentTenant, tenantsList, switchTenant, updatePlan, invoices, registerNewTenant } = useTenant();
@@ -700,6 +701,33 @@ export const SaasSubscription: React.FC = () => {
                   <option value="Pro">Pro (Até 50 Vigilantes - R$ 690/mês)</option>
                   <option value="Enterprise">Enterprise (Até 250+ Vigilantes - R$ 1.290/mês)</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="form-label text-xxs font-semibold block mb-1">Comprovante de Pagamento / Contrato de Adesão (PDF / Imagem)</label>
+                <label className="w-full p-2.5 border border-gray-200 rounded-lg flex items-center justify-between cursor-pointer hover:border-blue-400 bg-gray-50 transition-all text-xs text-gray-600">
+                  <span className="flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-blue-600" />
+                    <span>Clique para Anexar Comprovante / Contrato (PDF)</span>
+                  </span>
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        toast.loading('Enviando comprovante...', { id: 'upload-saas-doc' });
+                        try {
+                          await uploadDocument(file, 'saas');
+                          toast.success('Comprovante anexado com sucesso!', { id: 'upload-saas-doc' });
+                        } catch (err) {
+                          toast.error('Erro ao enviar comprovante.', { id: 'upload-saas-doc' });
+                        }
+                      }
+                    }}
+                  />
+                </label>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">

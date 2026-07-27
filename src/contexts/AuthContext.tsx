@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole, Permission } from '../types';
 import { db } from '../services/db';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -102,24 +103,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const storedUser = localStorage.getItem('evo_auth_user');
     if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      setUser(parsed);
-      setRole(parsed.role);
+      try {
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+        setRole(parsed.role);
+      } catch (e) {
+        localStorage.removeItem('evo_auth_user');
+        setUser(null);
+      }
     } else {
-      // Default auto login for preview smoothness
-      const defaultUser: User = {
-        id: 'usr-1',
-        email: 'elmaneko3d@gmail.com',
-        name: 'Elmaneko Admin',
-        role: 'Administrador',
-        status: 'Ativo',
-        createdAt: '2026-01-01',
-        accessLevel: 'Total (Admin)',
-        avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
-      };
-      localStorage.setItem('evo_auth_user', JSON.stringify(defaultUser));
-      setUser(defaultUser);
-      setRole('Administrador');
+      setUser(null);
     }
 
     bootstrap();
@@ -145,7 +138,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    // If client email, mock client login
+    // Try Supabase Auth first if password is provided
+    if (password && password.length >= 6) {
+      try {
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (!authError && authData.user) {
+          const loggedUser: User = {
+            id: authData.user.id,
+            email: authData.user.email || email,
+            name: authData.user.user_metadata?.full_name || authData.user.email?.split('@')[0] || 'Usuário Autenticado',
+            role: (authData.user.user_metadata?.role as UserRole) || 'Administrador',
+            status: 'Ativo',
+            createdAt: authData.user.created_at,
+            accessLevel: 'Total (Admin)',
+            avatarUrl: authData.user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+          };
+
+          localStorage.setItem('evo_auth_user', JSON.stringify(loggedUser));
+          setUser(loggedUser);
+          setRole(loggedUser.role);
+
+          db.audit(
+            { id: loggedUser.id, name: loggedUser.name, role: loggedUser.role },
+            'Login',
+            'Auth',
+            `Login efetuado via Supabase Auth com RLS ativado para ${loggedUser.name}`
+          );
+
+          return true;
+        }
+      } catch (err) {
+        console.warn('Supabase Auth offline ou não configurado, utilizando fallback de login:', err);
+      }
+    }
+
+    // Resilient Fallback Login
     let loggedUser: User;
     if (email.toLowerCase().includes('client') || email.toLowerCase().includes('condominio')) {
       loggedUser = {
@@ -156,7 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: 'Ativo',
         createdAt: '2026-01-01',
         accessLevel: 'Somente Leitura',
-        companyId: 'cli-1', // Points to Condomínio Residencial Flores
+        companyId: 'cli-1',
         avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
       };
     } else if (email.toLowerCase().includes('rh')) {
@@ -197,7 +228,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn('Erro ao encerrar sessão Supabase:', e);
+    }
+
     if (user) {
       db.audit(
         { id: user.id, name: user.name, role: user.role },
@@ -211,6 +248,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const recoverPassword = async (email: string): Promise<boolean> => {
+    try {
+      await supabase.auth.resetPasswordForEmail(email);
+    } catch (e) {
+      console.warn('Recuperação via Supabase Auth offline:', e);
+    }
+
     db.audit(
       { id: 'anonymous', name: 'Visitante Anônimo', role: 'Operador' },
       'Recuperar Senha',

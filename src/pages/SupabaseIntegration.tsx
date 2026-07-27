@@ -76,30 +76,35 @@ export const SupabaseIntegration: React.FC = () => {
     }
   };
 
-  const sampleSqlScript = `-- SCRIPT DE CRIAÇÃO E MIGRAÇÃO COMPLETA DE TABELAS
--- Execute este script na Central de Administração de Banco de Dados
-CREATE TABLE IF NOT EXISTS public.tenants (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  cnpj TEXT NOT NULL,
-  plan TEXT DEFAULT 'Pro',
-  status TEXT DEFAULT 'Ativo',
-  created_at TEXT NOT NULL
-);
+  const sampleSqlScript = `-- EVOLUTIONSEG — SCRIPT MULTI-TENANT DE CRIAÇÃO E RLS COMPLETO SUPABASE
+-- Execute no Supabase Panel (SQL Editor -> New Query -> Run)
 
-CREATE TABLE IF NOT EXISTS public.employees (
-  id TEXT PRIMARY KEY,
-  tenant_id TEXT REFERENCES public.tenants(id),
-  name TEXT NOT NULL,
-  role TEXT NOT NULL,
-  created_at TEXT NOT NULL
-);
+-- Habilitar RLS em todas as 13 tabelas
+ALTER TABLE IF EXISTS public.tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.employees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.contracts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.scale_allocations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.providers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.asset_allocations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.maintenances ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.employee_occurrences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.app_notifications ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de isolamento Multi-tenant RLS
+CREATE POLICY "Multi-tenant RLS: Employees" ON public.employees FOR ALL USING (tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id));
+CREATE POLICY "Multi-tenant RLS: Clients" ON public.clients FOR ALL USING (tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id));
+CREATE POLICY "Multi-tenant RLS: Contracts" ON public.contracts FOR ALL USING (tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id));
+CREATE POLICY "Multi-tenant RLS: Assets" ON public.assets FOR ALL USING (tenant_id = coalesce(current_setting('app.current_tenant_id', true), tenant_id));
 `;
 
   const copySqlToClipboard = () => {
     navigator.clipboard.writeText(sampleSqlScript);
     setCopiedSql(true);
-    toast.success('Script de inicialização copiado para a área de transferência!');
+    toast.success('Script SQL com RLS ativado copiado para a área de transferência!');
     setTimeout(() => setCopiedSql(false), 3000);
   };
 

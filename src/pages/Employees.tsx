@@ -66,11 +66,11 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
   const [formBankAccount, setFormBankAccount] = useState('');
   const [formPix, setFormPix] = useState('');
 
-  // Simulated drag-and-drop file attachments state
-  const [attachedCnh, setAttachedCnh] = useState(false);
-  const [attachedCourse, setAttachedCourse] = useState(false);
-  const [attachedRecycling, setAttachedRecycling] = useState(false);
-  const [attachedAso, setAttachedAso] = useState(false);
+  // Real document file attachment states
+  const [formCnhUrl, setFormCnhUrl] = useState<string | undefined>(undefined);
+  const [formVigilanteCourseUrl, setFormVigilanteCourseUrl] = useState<string | undefined>(undefined);
+  const [formRecyclingUrl, setFormRecyclingUrl] = useState<string | undefined>(undefined);
+  const [formAsoUrl, setFormAsoUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadEmployees();
@@ -122,10 +122,10 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
       setFormBankAccount(emp.bankAccount);
       setFormPix(emp.pixKey);
       
-      setAttachedCnh(!!emp.cnhUrl);
-      setAttachedCourse(!!emp.vigilanteCourseUrl);
-      setAttachedRecycling(!!emp.recyclingUrl);
-      setAttachedAso(!!emp.asoUrl);
+      setFormCnhUrl(emp.cnhUrl);
+      setFormVigilanteCourseUrl(emp.vigilanteCourseUrl);
+      setFormRecyclingUrl(emp.recyclingUrl);
+      setFormAsoUrl(emp.asoUrl);
     } else {
       setEditingEmp(null);
       setFormName('');
@@ -155,10 +155,10 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
       setFormBankAccount('');
       setFormPix('');
       
-      setAttachedCnh(false);
-      setAttachedCourse(false);
-      setAttachedRecycling(false);
-      setAttachedAso(false);
+      setFormCnhUrl(undefined);
+      setFormVigilanteCourseUrl(undefined);
+      setFormRecyclingUrl(undefined);
+      setFormAsoUrl(undefined);
     }
     setShowForm(true);
   };
@@ -205,10 +205,10 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
         bankAgency: formBankAgency,
         bankAccount: formBankAccount,
         pixKey: formPix,
-        cnhUrl: attachedCnh ? 'cnh_doc.pdf' : undefined,
-        vigilanteCourseUrl: attachedCourse ? 'curso_doc.pdf' : undefined,
-        recyclingUrl: attachedRecycling ? 'recycling_doc.pdf' : undefined,
-        asoUrl: attachedAso ? 'aso_doc.pdf' : undefined,
+        cnhUrl: formCnhUrl,
+        vigilanteCourseUrl: formVigilanteCourseUrl,
+        recyclingUrl: formRecyclingUrl,
+        asoUrl: formAsoUrl,
       };
 
       list[index] = updated;
@@ -246,10 +246,10 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
         bankAgency: formBankAgency,
         bankAccount: formBankAccount,
         pixKey: formPix,
-        cnhUrl: attachedCnh ? 'cnh_doc.pdf' : undefined,
-        vigilanteCourseUrl: attachedCourse ? 'curso_doc.pdf' : undefined,
-        recyclingUrl: attachedRecycling ? 'recycling_doc.pdf' : undefined,
-        asoUrl: attachedAso ? 'aso_doc.pdf' : undefined,
+        cnhUrl: formCnhUrl,
+        vigilanteCourseUrl: formVigilanteCourseUrl,
+        recyclingUrl: formRecyclingUrl,
+        asoUrl: formAsoUrl,
         createdAt: new Date().toISOString(),
       };
 
@@ -611,16 +611,17 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
                     </h4>
                     <div className="space-y-2">
                       {[
-                        { label: 'CNH do Condutor', value: selectedEmp.cnhUrl, docKey: 'cnhUrl' },
-                        { label: 'Curso de Vigilante (PF)', value: selectedEmp.vigilanteCourseUrl, docKey: 'vigilanteCourseUrl' },
-                        { label: 'Reciclagem Válida', value: selectedEmp.recyclingUrl, docKey: 'recyclingUrl' },
-                        { label: 'Atestado Saúde (ASO)', value: selectedEmp.asoUrl, docKey: 'asoUrl' },
+                        { label: 'CNH do Condutor', value: selectedEmp.cnhUrl, docKey: 'cnhUrl' as const },
+                        { label: 'Curso de Vigilante (PF)', value: selectedEmp.vigilanteCourseUrl, docKey: 'vigilanteCourseUrl' as const },
+                        { label: 'Reciclagem Válida', value: selectedEmp.recyclingUrl, docKey: 'recyclingUrl' as const },
+                        { label: 'Atestado Saúde (ASO)', value: selectedEmp.asoUrl, docKey: 'asoUrl' as const },
                       ].map((doc, idx) => (
                         <div key={idx} className="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-200 text-xs">
                           <span className="text-gray-800 font-medium">{doc.label}</span>
                           <div className="flex items-center gap-2">
-                            {doc.value ? (
+                            {doc.value && (
                               <button
+                                type="button"
                                 onClick={() => setActiveViewDoc({
                                   id: `doc-emp-${idx}`,
                                   fileName: `${doc.label}.pdf`,
@@ -632,30 +633,33 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
                                 })}
                                 className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xxs font-bold flex items-center gap-1 cursor-pointer hover:bg-emerald-100"
                               >
-                                <Eye className="w-3 h-3 text-emerald-600" /> Ver / Baixar PDF
+                                <Eye className="w-3 h-3 text-emerald-600" /> Ver / Baixar
                               </button>
-                            ) : (
-                              <label className="px-2.5 py-1 bg-cyan-50 text-cyan-700 border border-cyan-200 rounded-lg text-xxs font-bold flex items-center gap-1 cursor-pointer hover:bg-cyan-100">
-                                <Upload className="w-3 h-3 text-cyan-600" /> Upload Físico
-                                <input
-                                  type="file"
-                                  accept=".pdf,.png,.jpg,.jpeg"
-                                  className="hidden"
-                                  onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      toast.loading('Enviando documento...', { id: 'upload-emp-doc' });
+                            )}
+                            <label className="px-2.5 py-1 bg-cyan-50 text-cyan-700 border border-cyan-200 rounded-lg text-xxs font-bold flex items-center gap-1 cursor-pointer hover:bg-cyan-100">
+                              <Upload className="w-3 h-3 text-cyan-600" /> {doc.value ? 'Trocar Anexo' : 'Anexar Físico'}
+                              <input
+                                type="file"
+                                accept=".pdf,.png,.jpg,.jpeg"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    toast.loading('Enviando documento...', { id: 'upload-emp-doc' });
+                                    try {
                                       const meta = await uploadDocument(file, 'employee-docs');
                                       db.updateEmployee(selectedEmp.id, { [doc.docKey]: meta.fileUrl });
                                       loadEmployees();
                                       const updated = db.getEmployees().find(emp => emp.id === selectedEmp.id);
                                       if (updated) setSelectedEmp(updated);
                                       toast.success(`Documento "${doc.label}" anexado com sucesso!`, { id: 'upload-emp-doc' });
+                                    } catch (err) {
+                                      toast.error('Erro ao enviar documento.', { id: 'upload-emp-doc' });
                                     }
-                                  }}
-                                />
-                              </label>
-                            )}
+                                  }
+                                }}
+                              />
+                            </label>
                           </div>
                         </div>
                       ))}
@@ -950,54 +954,50 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
                     <input type="text" value={formPix} onChange={e => setFormPix(e.target.value)} className="form-input" placeholder="Chave celular / email / CPF" />
                   </div>
 
-                  {/* Upload drag and drop */}
+                  {/* Upload de Documentos Regulamentares */}
                   <div className="space-y-2 pt-2 border-t border-gray-100">
-                    <span className="form-label text-xxs font-semibold block mb-1">Simulação de Upload de Documentos Regulamentares</span>
+                    <span className="form-label text-xxs font-semibold block mb-1">Anexo de Documentos Regulamentares (Clique para abrir janela de arquivos)</span>
                     
                     <div className="grid grid-cols-2 gap-2 text-xxxxs">
-                      <button 
-                        type="button" 
-                        onClick={() => setAttachedCnh(!attachedCnh)}
-                        className={`p-2.5 rounded-lg border flex items-center justify-between cursor-pointer transition-colors ${
-                          attachedCnh ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600'
-                        }`}
-                      >
-                        <span className="flex items-center gap-1.5"><Upload className="w-3.5 h-3.5" /> CNH Condutor</span>
-                        <span className={`px-1.5 py-0.5 rounded text-xxxxs ${attachedCnh ? 'bg-emerald-200 text-emerald-900' : 'bg-gray-200 text-gray-500'}`}>{attachedCnh ? 'Anexado' : 'Pendente'}</span>
-                      </button>
-
-                      <button 
-                        type="button" 
-                        onClick={() => setAttachedCourse(!attachedCourse)}
-                        className={`p-2.5 rounded-lg border flex items-center justify-between cursor-pointer transition-colors ${
-                          attachedCourse ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600'
-                        }`}
-                      >
-                        <span className="flex items-center gap-1.5"><Upload className="w-3.5 h-3.5" /> Curso Vigilante</span>
-                        <span className={`px-1.5 py-0.5 rounded text-xxxxs ${attachedCourse ? 'bg-emerald-200 text-emerald-900' : 'bg-gray-200 text-gray-500'}`}>{attachedCourse ? 'Anexado' : 'Pendente'}</span>
-                      </button>
-
-                      <button 
-                        type="button" 
-                        onClick={() => setAttachedRecycling(!attachedRecycling)}
-                        className={`p-2.5 rounded-lg border flex items-center justify-between cursor-pointer transition-colors ${
-                          attachedRecycling ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600'
-                        }`}
-                      >
-                        <span className="flex items-center gap-1.5"><Upload className="w-3.5 h-3.5" /> Reciclagem Válida</span>
-                        <span className={`px-1.5 py-0.5 rounded text-xxxxs ${attachedRecycling ? 'bg-emerald-200 text-emerald-900' : 'bg-gray-200 text-gray-500'}`}>{attachedRecycling ? 'Anexado' : 'Pendente'}</span>
-                      </button>
-
-                      <button 
-                        type="button" 
-                        onClick={() => setAttachedAso(!attachedAso)}
-                        className={`p-2.5 rounded-lg border flex items-center justify-between cursor-pointer transition-colors ${
-                          attachedAso ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600'
-                        }`}
-                      >
-                        <span className="flex items-center gap-1.5"><Upload className="w-3.5 h-3.5" /> ASO Ocupacional</span>
-                        <span className={`px-1.5 py-0.5 rounded text-xxxxs ${attachedAso ? 'bg-emerald-200 text-emerald-900' : 'bg-gray-200 text-gray-500'}`}>{attachedAso ? 'Anexado' : 'Pendente'}</span>
-                      </button>
+                      {[
+                        { label: 'CNH Condutor', val: formCnhUrl, setter: setFormCnhUrl },
+                        { label: 'Curso Vigilante', val: formVigilanteCourseUrl, setter: setFormVigilanteCourseUrl },
+                        { label: 'Reciclagem Válida', val: formRecyclingUrl, setter: setFormRecyclingUrl },
+                        { label: 'ASO Ocupacional', val: formAsoUrl, setter: setFormAsoUrl },
+                      ].map((item, i) => (
+                        <label 
+                          key={i}
+                          className={`p-2.5 rounded-lg border flex items-center justify-between cursor-pointer transition-all hover:border-blue-400 ${
+                            item.val ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600'
+                          }`}
+                        >
+                          <span className="flex items-center gap-1.5 truncate">
+                            <Upload className="w-3.5 h-3.5 text-blue-600 shrink-0" /> 
+                            <span className="truncate">{item.label}</span>
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded text-xxxxs shrink-0 ${item.val ? 'bg-emerald-200 text-emerald-900 font-bold' : 'bg-gray-200 text-gray-500'}`}>
+                            {item.val ? 'Anexado' : 'Selecionar'}
+                          </span>
+                          <input 
+                            type="file"
+                            accept=".pdf,.png,.jpg,.jpeg"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                toast.loading(`Enviando ${item.label}...`, { id: `upload-form-${i}` });
+                                try {
+                                  const meta = await uploadDocument(file, 'employee-docs');
+                                  item.setter(meta.fileUrl);
+                                  toast.success(`Documento "${item.label}" anexado com sucesso!`, { id: `upload-form-${i}` });
+                                } catch (err) {
+                                  toast.error('Erro ao anexar arquivo.', { id: `upload-form-${i}` });
+                                }
+                              }
+                            }}
+                          />
+                        </label>
+                      ))}
                     </div>
                   </div>
                 </div>

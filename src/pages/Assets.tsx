@@ -4,9 +4,11 @@ import { Asset, Employee, Client, Contract, AssetAllocation } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Package, Search, Plus, Eye, Edit, Trash2, X, ClipboardSignature, 
-  ArrowRight, ShieldCheck, History, Calendar, CheckCircle2, QrCode
+  ArrowRight, ShieldCheck, History, Calendar, CheckCircle2, QrCode, FileText, Upload
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { uploadDocument, DocumentMetadata } from '../services/storage';
+import { DocumentViewerModal } from '../components/DocumentViewerModal';
 
 interface AssetsProps {
   openDetailId: { type: string; id: string } | null;
@@ -31,6 +33,8 @@ export const Assets: React.FC<AssetsProps> = ({ openDetailId, setOpenDetailId })
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
 
   // Asset Form fields
+  const [activeViewDoc, setActiveViewDoc] = useState<DocumentMetadata | null>(null);
+  const [formDocUrl, setFormDocUrl] = useState<string | undefined>(undefined);
   const [formNumber, setFormNumber] = useState('');
   const [formSerial, setFormSerial] = useState('');
   const [formCategory, setFormCategory] = useState<'Celulares' | 'Carros' | 'Motos' | 'Notebook' | 'Computador' | 'Tablet' | 'Colete' | 'Arma' | 'Rádio Comunicador' | 'Lanterna' | 'Uniformes' | 'Equipamentos' | 'Outros'>('Rádio Comunicador');
@@ -550,6 +554,39 @@ export const Assets: React.FC<AssetsProps> = ({ openDetailId, setOpenDetailId })
                 <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={3} className="form-input resize-none" placeholder="Marcas físicas, termos balísticos..."></textarea>
               </div>
 
+              <div>
+                <label className="form-label text-xxs font-semibold block mb-1">Nota Fiscal / Laudo do Equipamento (PDF / Imagem)</label>
+                <label className={`w-full p-2.5 border rounded-lg flex items-center justify-between cursor-pointer transition-all hover:border-blue-400 ${
+                  formDocUrl ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600'
+                }`}>
+                  <span className="flex items-center gap-2 text-xs">
+                    <Upload className="w-4 h-4 text-blue-600" />
+                    <span>{formDocUrl ? 'Nota Fiscal / Laudo Anexado' : 'Clique para Escolher Arquivo da NF / Laudo'}</span>
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-xxxxs ${formDocUrl ? 'bg-emerald-200 text-emerald-900 font-bold' : 'bg-gray-200 text-gray-500'}`}>
+                    {formDocUrl ? 'Anexado' : 'Selecionar'}
+                  </span>
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        toast.loading('Enviando Nota Fiscal / Laudo...', { id: 'upload-ast-doc' });
+                        try {
+                          const meta = await uploadDocument(file, 'assets');
+                          setFormDocUrl(meta.fileUrl);
+                          toast.success('Documento do equipamento anexado!', { id: 'upload-ast-doc' });
+                        } catch (err) {
+                          toast.error('Erro ao enviar arquivo.', { id: 'upload-ast-doc' });
+                        }
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                 <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary cursor-pointer">Cancelar</button>
                 <button type="submit" className="btn btn-primary cursor-pointer text-white bg-blue-600 hover:bg-blue-700 font-bold px-6">Salvar Patrimônio</button>
@@ -662,6 +699,12 @@ export const Assets: React.FC<AssetsProps> = ({ openDetailId, setOpenDetailId })
           </div>
         </div>
       )}
+
+      {/* DOCUMENT VIEWER MODAL */}
+      <DocumentViewerModal
+        document={activeViewDoc}
+        onClose={() => setActiveViewDoc(null)}
+      />
 
     </div>
   );

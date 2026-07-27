@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../services/db';
 import { Contract, Client } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { FileText, Search, Plus, Eye, Edit, Trash2, X, AlertTriangle, FileUp } from 'lucide-react';
+import { FileText, Search, Plus, Eye, Edit, Trash2, X, AlertTriangle, FileUp, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { uploadDocument, DocumentMetadata } from '../services/storage';
+import { DocumentViewerModal } from '../components/DocumentViewerModal';
 
 interface ContractsProps {
   openDetailId: { type: string; id: string } | null;
@@ -21,6 +23,7 @@ export const Contracts: React.FC<ContractsProps> = ({ openDetailId, setOpenDetai
   const [showForm, setShowForm] = useState(false);
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [activeViewDoc, setActiveViewDoc] = useState<DocumentMetadata | null>(null);
 
   // Form Fields
   const [formClientId, setFormClientId] = useState('');
@@ -33,7 +36,7 @@ export const Contracts: React.FC<ContractsProps> = ({ openDetailId, setOpenDetai
   const [formContractType, setFormContractType] = useState('Vigilância Patrimonial');
   const [formSituation, setFormSituation] = useState<'Ativo' | 'Vencido' | 'Suspenso' | 'Cancelado'>('Ativo');
   const [formNotes, setFormNotes] = useState('');
-  const [attachedPdf, setAttachedPdf] = useState(false);
+  const [formPdfUrl, setFormPdfUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadData();
@@ -73,7 +76,7 @@ export const Contracts: React.FC<ContractsProps> = ({ openDetailId, setOpenDetai
       setFormContractType(con.contractType);
       setFormSituation(con.situation);
       setFormNotes(con.notes || '');
-      setAttachedPdf(!!con.pdfUrl);
+      setFormPdfUrl(con.pdfUrl);
     } else {
       setEditingContract(null);
       setFormClientId(clientsList[0]?.id || '');
@@ -91,7 +94,7 @@ export const Contracts: React.FC<ContractsProps> = ({ openDetailId, setOpenDetai
       setFormContractType('Vigilância Patrimonial Desarmada 12x36');
       setFormSituation('Ativo');
       setFormNotes('');
-      setAttachedPdf(false);
+      setFormPdfUrl(undefined);
     }
     setShowForm(true);
   };
@@ -121,15 +124,15 @@ export const Contracts: React.FC<ContractsProps> = ({ openDetailId, setOpenDetai
         contractType: formContractType,
         situation: formSituation,
         notes: formNotes || undefined,
-        pdfUrl: attachedPdf ? 'contrato_assinado.pdf' : undefined,
+        pdfUrl: formPdfUrl,
       };
       list[index] = updated;
       db.saveContracts(list);
       db.audit(operator, 'Editar', 'Contracts', `Atualizou cláusulas do contrato ${formNumber}`, beforeState, updated);
-      toast.success('Cláusulas contratuais salvas com sucesso!');
+      toast.success('Contrato atualizado com sucesso!');
     } else {
       const newContract: Contract = {
-        id: `con-${Date.now()}`,
+        id: `ct-${Date.now()}`,
         clientId: formClientId,
         contractNumber: formNumber,
         startDate: formStartDate,
@@ -140,17 +143,16 @@ export const Contracts: React.FC<ContractsProps> = ({ openDetailId, setOpenDetai
         contractType: formContractType,
         situation: formSituation,
         notes: formNotes || undefined,
-        pdfUrl: attachedPdf ? 'contrato_assinado.pdf' : undefined,
+        pdfUrl: formPdfUrl,
         createdAt: new Date().toISOString(),
       };
       list.push(newContract);
       db.saveContracts(list);
-      db.audit(operator, 'Cadastrar', 'Contracts', `Firmou novo contrato operacional ${formNumber}`, null, newContract);
-      toast.success('Contrato operacional firmado com sucesso!');
+      db.audit(operator, 'Cadastrar', 'Contracts', `Firmou o novo contrato ${formNumber}`, null, newContract);
+      toast.success('Novo contrato assinado e firmado com sucesso!');
     }
-
-    loadData();
     setShowForm(false);
+    loadData();
   };
 
   const handleDelete = (con: Contract) => {
@@ -417,18 +419,52 @@ export const Contracts: React.FC<ContractsProps> = ({ openDetailId, setOpenDetai
                 )}
 
                 <div className="pt-2">
-                  <span className="text-xxs text-gray-400 block mb-1.5">Documento Digitalizado (PDF):</span>
-                  {selectedContract.pdfUrl ? (
-                    <a 
-                      href="#" 
-                      onClick={(e) => { e.preventDefault(); toast.success('Exibindo arquivo contrato_assinado.pdf!'); }}
-                      className="inline-flex items-center gap-1.5 text-xxs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg"
-                    >
-                      <FileText className="w-4 h-4" /> Visualizar Contrato Assinado.pdf
-                    </a>
-                  ) : (
-                    <span className="text-xxs text-gray-400 bg-gray-100 p-2 rounded block">Nenhum contrato em PDF anexado.</span>
-                  )}
+                  <span className="text-xxs text-gray-400 block mb-1.5">Documento Digitalizado (PDF / Imagem):</span>
+                  <div className="flex items-center gap-2">
+                    {selectedContract.pdfUrl && (
+                      <button 
+                        type="button"
+                        onClick={() => setActiveViewDoc({
+                          id: `doc-ct-${selectedContract.id}`,
+                          fileName: `Contrato_${selectedContract.contractNumber}.pdf`,
+                          fileUrl: selectedContract.pdfUrl!,
+                          fileSize: 1024 * 720,
+                          formattedSize: '720 KB',
+                          mimeType: 'application/pdf',
+                          uploadedAt: new Date().toISOString()
+                        })}
+                        className="inline-flex items-center gap-1.5 text-xxs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-emerald-100"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-emerald-600" /> Visualizar Contrato
+                      </button>
+                    )}
+                    <label className="inline-flex items-center gap-1.5 text-xxs font-bold text-cyan-700 bg-cyan-50 border border-cyan-200 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-cyan-100">
+                      <Upload className="w-3.5 h-3.5 text-cyan-600" /> {selectedContract.pdfUrl ? 'Trocar Anexo' : 'Anexar Físico (PDF)'}
+                      <input
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            toast.loading('Enviando contrato...', { id: 'upload-ct-file' });
+                            try {
+                              const meta = await uploadDocument(file, 'contracts');
+                              const currentList = db.getContracts();
+                              const updatedList = currentList.map(c => c.id === selectedContract.id ? { ...c, pdfUrl: meta.fileUrl } : c);
+                              db.saveContracts(updatedList);
+                              loadData();
+                              const updated = updatedList.find(c => c.id === selectedContract.id);
+                              if (updated) setSelectedContract(updated);
+                              toast.success('Contrato em PDF anexado!', { id: 'upload-ct-file' });
+                            } catch (err) {
+                              toast.error('Erro ao enviar contrato.', { id: 'upload-ct-file' });
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -533,16 +569,32 @@ export const Contracts: React.FC<ContractsProps> = ({ openDetailId, setOpenDetai
                 
                 <div>
                   <label className="form-label text-xxs font-semibold block mb-2">Contrato Digitalizado (Upload)</label>
-                  <button 
-                    type="button" 
-                    onClick={() => setAttachedPdf(!attachedPdf)}
+                  <label 
                     className={`w-full py-2 border rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors text-xxs ${
-                      attachedPdf ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-500'
+                      formPdfUrl ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600'
                     }`}
                   >
-                    <FileUp className="w-4 h-4" />
-                    <span>{attachedPdf ? 'CONTRATO ANEXADO.PDF' : 'Anexar Instrumento Assinado PDF'}</span>
-                  </button>
+                    <FileUp className="w-4 h-4 text-blue-600" />
+                    <span>{formPdfUrl ? 'CONTRATO ANEXADO' : 'Anexar Instrumento Assinado (PDF/Imagem)'}</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          toast.loading('Enviando arquivo físico...', { id: 'upload-form-ct' });
+                          try {
+                            const meta = await uploadDocument(file, 'contracts');
+                            setFormPdfUrl(meta.fileUrl);
+                            toast.success('Contrato anexado!', { id: 'upload-form-ct' });
+                          } catch (err) {
+                            toast.error('Erro ao anexar arquivo.', { id: 'upload-form-ct' });
+                          }
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
 
@@ -555,6 +607,12 @@ export const Contracts: React.FC<ContractsProps> = ({ openDetailId, setOpenDetai
           </div>
         </div>
       )}
+
+      {/* DOCUMENT VIEWER MODAL */}
+      <DocumentViewerModal
+        document={activeViewDoc}
+        onClose={() => setActiveViewDoc(null)}
+      />
 
     </div>
   );
