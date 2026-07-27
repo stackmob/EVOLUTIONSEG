@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   role: UserRole;
   login: (email: string, password?: string) => Promise<boolean>;
+  registerUser: (name: string, email: string, password?: string) => Promise<boolean>;
   logout: () => void;
   recoverPassword: (email: string) => Promise<boolean>;
   switchRole: (newRole: UserRole) => void;
@@ -228,6 +229,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
+  const registerUser = async (name: string, email: string, password?: string): Promise<boolean> => {
+    if (password && password.length >= 6) {
+      try {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: name, role: 'Administrador' }
+          }
+        });
+
+        if (!authError && authData.user) {
+          const newUser: User = {
+            id: authData.user.id,
+            email: authData.user.email || email,
+            name: name || authData.user.email?.split('@')[0] || 'Novo Administrador',
+            role: 'Administrador',
+            status: 'Ativo',
+            createdAt: new Date().toISOString().split('T')[0],
+            accessLevel: 'Total (Admin)',
+            avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+          };
+
+          localStorage.setItem('evo_auth_user', JSON.stringify(newUser));
+          setUser(newUser);
+          setRole('Administrador');
+
+          db.audit(
+            { id: newUser.id, name: newUser.name, role: newUser.role },
+            'Cadastrar',
+            'Auth',
+            `Novo usuário cadastrado por e-mail com sucesso: ${newUser.email}`
+          );
+
+          return true;
+        }
+      } catch (err) {
+        console.warn('Supabase Auth signUp offline ou erro:', err);
+      }
+    }
+
+    // Fallback registration
+    const newUser: User = {
+      id: `usr-${Date.now()}`,
+      email,
+      name: name || email.split('@')[0],
+      role: 'Administrador',
+      status: 'Ativo',
+      createdAt: new Date().toISOString().split('T')[0],
+      accessLevel: 'Total (Admin)',
+      avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    };
+
+    localStorage.setItem('evo_auth_user', JSON.stringify(newUser));
+    setUser(newUser);
+    setRole('Administrador');
+
+    db.audit(
+      { id: newUser.id, name: newUser.name, role: newUser.role },
+      'Cadastrar',
+      'Auth',
+      `Novo usuário registrado por e-mail: ${newUser.email}`
+    );
+
+    return true;
+  };
+
   const logout = async () => {
     try {
       await supabase.auth.signOut();
@@ -295,7 +363,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, login, logout, recoverPassword, switchRole, hasPermission }}>
+    <AuthContext.Provider value={{ user, role, login, registerUser, logout, recoverPassword, switchRole, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

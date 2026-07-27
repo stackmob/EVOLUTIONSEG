@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useTenant } from '../contexts/TenantContext';
-import { SaasPlan } from '../types';
-import { Shield, Eye, EyeOff, Lock, Mail, RefreshCw, Sparkles, ArrowRight, Activity, Building2, User, FileText, CheckCircle2 } from 'lucide-react';
+import { Shield, Eye, EyeOff, Lock, Mail, RefreshCw, Sparkles, ArrowRight, Activity, User as UserIcon, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const Login: React.FC = () => {
-  const { login, recoverPassword } = useAuth();
-  const { registerNewTenant } = useTenant();
+  const { login, registerUser, recoverPassword } = useAuth();
   
   const [mode, setMode] = useState<'login' | 'register'>('login');
   
@@ -21,13 +18,10 @@ export const Login: React.FC = () => {
   const [isRecovering, setIsRecovering] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
 
-  // Register New Tenant (Multi-company) states
-  const [regCompanyName, setRegCompanyName] = useState('');
-  const [regCnpj, setRegCnpj] = useState('');
-  const [regAdminName, setRegAdminName] = useState('');
-  const [regAdminEmail, setRegAdminEmail] = useState('');
-  const [regAdminPassword, setRegAdminPassword] = useState('');
-  const [regPlan, setRegPlan] = useState<SaasPlan>('Pro');
+  // Register state (Email Signup)
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,26 +44,23 @@ export const Login: React.FC = () => {
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regCompanyName || !regCnpj || !regAdminName || !regAdminEmail || !regAdminPassword) {
-      toast.error('Preencha todos os campos do cadastro da empresa.');
+    if (!regName || !regEmail || !regPassword) {
+      toast.error('Preencha seu nome, e-mail e senha para cadastrar.');
       return;
     }
 
-    if (regAdminPassword.length < 6) {
+    if (regPassword.length < 6) {
       toast.error('A senha deve conter no mínimo 6 caracteres.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // 1. Cadastrar nova empresa (tenant)
-      registerNewTenant(regCompanyName, regCnpj, regAdminName, regAdminEmail, regPlan);
-
-      // 2. Autenticar automaticamente o novo administrador
-      await login(regAdminEmail, regAdminPassword);
-      toast.success(`Empresa "${regCompanyName}" cadastrada com sucesso! Bem-vindo ao Evolution Seg APP.`);
+      // 1. Cadastrar usuário por e-mail
+      await registerUser(regName, regEmail, regPassword);
+      toast.success(`Conta criada com sucesso! Bem-vindo ao Evolution Seg APP.`);
     } catch (err: any) {
-      toast.error(err?.message || 'Erro ao registrar empresa.');
+      toast.error(err?.message || 'Erro ao criar conta.');
     } finally {
       setIsSubmitting(false);
     }
@@ -176,20 +167,20 @@ export const Login: React.FC = () => {
                 Gestão Tática de Segurança Privada
               </h1>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Plataforma SaaS Multi-Tenant para gestão de vigilantes, postos de trabalho, escalas, frotas e controle operacional de múltiplas empresas contratantes.
+                Plataforma SaaS Multi-Tenant para gestão de vigilantes, postos de trabalho, escalas, frotas e controle operacional de empresas de segurança.
               </p>
             </div>
           </div>
 
           <div className="space-y-3 pt-6 border-t border-slate-800/60 text-xs text-slate-400">
             <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+              <CheckCircle2 className="w-4 h-4" /> Cadastro Gratuito e Imediato por E-mail
+            </div>
+            <div className="flex items-center gap-2 text-emerald-400 font-semibold">
               <CheckCircle2 className="w-4 h-4" /> Isolamento Multi-Tenant por Empresa
             </div>
             <div className="flex items-center gap-2 text-emerald-400 font-semibold">
               <CheckCircle2 className="w-4 h-4" /> Segurança RLS em Nível de Linha (PostgreSQL)
-            </div>
-            <div className="flex items-center gap-2 text-emerald-400 font-semibold">
-              <CheckCircle2 className="w-4 h-4" /> Auditoria Tática e Escalas em Tempo Real
             </div>
           </div>
         </div>
@@ -220,7 +211,7 @@ export const Login: React.FC = () => {
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Cadastrar Empresa
+                Criar Conta
               </button>
             </div>
           </div>
@@ -302,121 +293,61 @@ export const Login: React.FC = () => {
 
             </form>
           ) : (
-            /* MODE: REGISTER MULTI-TENANT COMPANY */
-            <form onSubmit={handleRegisterSubmit} className="space-y-3">
-              <div className="space-y-0.5">
-                <h2 className="text-lg font-extrabold text-white font-heading">Cadastrar Nova Empresa</h2>
-                <p className="text-xs text-slate-400">Registre sua empresa de segurança e crie o usuário Administrador.</p>
+            /* MODE: SIMPLIFIED EMAIL REGISTER */
+            <form onSubmit={handleRegisterSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-lg font-extrabold text-white font-heading">Criar Nova Conta</h2>
+                <p className="text-xs text-slate-400">Cadastre-se com seu e-mail. Você configurará os dados da sua empresa após o login.</p>
               </div>
 
-              {/* Company Name & CNPJ */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xxs font-mono font-bold text-slate-300 uppercase">Razão Social / Nome</label>
-                  <div className="relative mt-1">
-                    <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-500">
-                      <Building2 className="w-3.5 h-3.5" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Alfa Segurança Ltda"
-                      value={regCompanyName}
-                      onChange={(e) => setRegCompanyName(e.target.value)}
-                      className="w-full pl-8 pr-2 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xxs font-mono font-bold text-slate-300 uppercase">CNPJ da Empresa</label>
-                  <div className="relative mt-1">
-                    <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-500">
-                      <FileText className="w-3.5 h-3.5" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="00.000.000/0001-00"
-                      value={regCnpj}
-                      onChange={(e) => setRegCnpj(e.target.value)}
-                      className="w-full pl-8 pr-2 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Admin Name */}
-              <div>
-                <label className="block text-xxs font-mono font-bold text-slate-300 uppercase">Nome do Administrador</label>
-                <div className="relative mt-1">
-                  <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-500">
-                    <User className="w-3.5 h-3.5" />
+              {/* Name Field */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Nome Completo</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
+                    <UserIcon className="w-4 h-4" />
                   </div>
                   <input
                     type="text"
-                    placeholder="Nome completo do responsável"
-                    value={regAdminName}
-                    onChange={(e) => setRegAdminName(e.target.value)}
-                    className="w-full pl-8 pr-2 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                    placeholder="Seu nome completo"
+                    value={regName}
+                    onChange={(e) => setRegName(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   />
                 </div>
               </div>
 
-              {/* Admin Email & Password */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xxs font-mono font-bold text-slate-300 uppercase">E-mail do Admin</label>
-                  <div className="relative mt-1">
-                    <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-500">
-                      <Mail className="w-3.5 h-3.5" />
-                    </div>
-                    <input
-                      type="email"
-                      placeholder="admin@empresa.com"
-                      value={regAdminEmail}
-                      onChange={(e) => setRegAdminEmail(e.target.value)}
-                      className="w-full pl-8 pr-2 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
-                    />
+              {/* Email Field */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">E-mail Corporativo</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
+                    <Mail className="w-4 h-4" />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-xxs font-mono font-bold text-slate-300 uppercase">Senha do Admin</label>
-                  <div className="relative mt-1">
-                    <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-500">
-                      <Lock className="w-3.5 h-3.5" />
-                    </div>
-                    <input
-                      type="password"
-                      placeholder="Mínimo 6 dígitos"
-                      value={regAdminPassword}
-                      onChange={(e) => setRegAdminPassword(e.target.value)}
-                      className="w-full pl-8 pr-2 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
-                    />
-                  </div>
+                  <input
+                    type="email"
+                    placeholder="seu.email@empresa.com.br"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 font-mono transition-all"
+                  />
                 </div>
               </div>
 
-              {/* Plan Choice */}
-              <div>
-                <label className="block text-xxs font-mono font-bold text-slate-300 uppercase mb-1">Plano Inicial</label>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  {(['Starter', 'Pro', 'Enterprise'] as SaasPlan[]).map(p => (
-                    <button
-                      type="button"
-                      key={p}
-                      onClick={() => setRegPlan(p)}
-                      className={`p-2 border rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer ${
-                        regPlan === p
-                          ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300 font-bold'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <span>{p}</span>
-                      <span className="text-[9px] opacity-75 font-mono">
-                        {p === 'Starter' ? '10 Vigilantes' : p === 'Pro' ? '50 Vigilantes' : '250+ Efetivo'}
-                      </span>
-                    </button>
-                  ))}
+              {/* Password Field */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Criar Senha</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 font-mono transition-all"
+                  />
                 </div>
               </div>
 
@@ -430,8 +361,8 @@ export const Login: React.FC = () => {
                   <RefreshCw className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    <Building2 className="w-4 h-4" />
-                    <span>Criar Empresa & Acessar</span>
+                    <span>Criar Minha Conta Grátis</span>
+                    <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>

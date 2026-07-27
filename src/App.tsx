@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-import { TenantProvider } from './contexts/TenantContext';
+import { TenantProvider, useTenant } from './contexts/TenantContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { DashboardLayout } from './layouts/DashboardLayout';
+import { CompanyOnboardingModal } from './components/CompanyOnboardingModal';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Employees } from './pages/Employees';
@@ -23,38 +24,52 @@ import { UsersManagement } from './pages/UsersManagement';
 
 const AppContent: React.FC = () => {
   const { user } = useAuth();
+  const { currentTenant } = useTenant();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   
   // Tracking detailed references clicked from global search or alerts
   const [openDetailId, setOpenDetailId] = useState<{ type: string; id: string } | null>(null);
+
+  // Check if newly logged in user needs company onboarding
+  const [showCompanyOnboarding, setShowCompanyOnboarding] = useState<boolean>(() => {
+    const hasCompanyConfig = localStorage.getItem('saas_current_tenant_id');
+    return !hasCompanyConfig;
+  });
 
   if (!user) {
     return <Login />;
   }
 
   return (
-    <DashboardLayout 
-      activeTab={activeTab} 
-      setActiveTab={setActiveTab}
-      openDetailId={openDetailId}
-      setOpenDetailId={setOpenDetailId}
-    >
-      {activeTab === 'dashboard' && <Dashboard setActiveTab={setActiveTab} />}
-      {activeTab === 'employees' && <Employees openDetailId={openDetailId} setOpenDetailId={setOpenDetailId} />}
-      {activeTab === 'occurrences' && <Occurrences />}
-      {activeTab === 'clients' && <Clients openDetailId={openDetailId} setOpenDetailId={setOpenDetailId} />}
-      {activeTab === 'contracts' && <Contracts openDetailId={openDetailId} setOpenDetailId={setOpenDetailId} />}
-      {activeTab === 'scales' && <Scales />}
-      {activeTab === 'assets' && <Assets openDetailId={openDetailId} setOpenDetailId={setOpenDetailId} />}
-      {activeTab === 'maintenance' && <Maintenance />}
-      {activeTab === 'providers' && <Providers />}
-      {activeTab === 'reports' && <Reports />}
-      {activeTab === 'users' && <UsersManagement />}
-      {activeTab === 'saas-plans' && <SaasSubscription />}
-      {activeTab === 'supabase' && <SupabaseIntegration />}
-      {activeTab === 'audit' && <AuditLogs />}
-      {activeTab === 'docs' && <Docs />}
-    </DashboardLayout>
+    <>
+      <CompanyOnboardingModal
+        isOpen={showCompanyOnboarding}
+        onComplete={() => setShowCompanyOnboarding(false)}
+      />
+
+      <DashboardLayout 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        openDetailId={openDetailId}
+        setOpenDetailId={setOpenDetailId}
+      >
+        {activeTab === 'dashboard' && <Dashboard setActiveTab={setActiveTab} />}
+        {activeTab === 'employees' && <Employees openDetailId={openDetailId} setOpenDetailId={setOpenDetailId} />}
+        {activeTab === 'occurrences' && <Occurrences />}
+        {activeTab === 'clients' && <Clients openDetailId={openDetailId} setOpenDetailId={setOpenDetailId} />}
+        {activeTab === 'contracts' && <Contracts openDetailId={openDetailId} setOpenDetailId={setOpenDetailId} />}
+        {activeTab === 'scales' && <Scales />}
+        {activeTab === 'assets' && <Assets openDetailId={openDetailId} setOpenDetailId={setOpenDetailId} />}
+        {activeTab === 'maintenance' && <Maintenance />}
+        {activeTab === 'providers' && <Providers />}
+        {activeTab === 'reports' && <Reports />}
+        {activeTab === 'users' && <UsersManagement />}
+        {activeTab === 'saas-plans' && <SaasSubscription />}
+        {activeTab === 'supabase' && <SupabaseIntegration />}
+        {activeTab === 'audit' && <AuditLogs />}
+        {activeTab === 'docs' && <Docs />}
+      </DashboardLayout>
+    </>
   );
 };
 
