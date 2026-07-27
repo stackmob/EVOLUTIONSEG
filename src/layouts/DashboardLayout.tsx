@@ -363,10 +363,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 }`}
               >
                 <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="max-w-24 sm:max-w-44 truncate">{currentTenant.name}</span>
-                <span className="text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded uppercase hidden sm:inline-block">
-                  {currentTenant.plan}
-                </span>
+                <span className="max-w-24 sm:max-w-44 truncate">{currentTenant?.name || 'Cadastrar Empresa'}</span>
+                {currentTenant && (
+                  <span className="text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded uppercase hidden sm:inline-block">
+                    {currentTenant.plan}
+                  </span>
+                )}
               </button>
 
               {showTenantDropdown && (
@@ -384,7 +386,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         setShowTenantDropdown(false);
                       }}
                       className={`w-full text-left p-2.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                        t.id === currentTenant.id
+                        t.id === currentTenant?.id
                           ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-bold'
                           : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                       }`}
@@ -393,9 +395,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         <span className="font-bold truncate">{t.name}</span>
                         <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400">CNPJ: {t.cnpj}</span>
                       </div>
-                      {t.id === currentTenant.id && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+                      {t.id === currentTenant?.id && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
                     </button>
                   ))}
+                  {tenantsList.length === 0 && (
+                    <div className="px-3 py-4 text-center text-[10px] text-slate-400 font-mono">
+                      Nenhuma empresa cadastrada ainda.
+                    </div>
+                  )}
                 </div>
               )}
             </div>
