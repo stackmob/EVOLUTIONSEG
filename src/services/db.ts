@@ -696,14 +696,7 @@ export const db = {
       if (stored) return JSON.parse(stored);
     } catch (e) {}
     
-    const initialUsers: User[] = [
-      { id: 'user-1', name: 'Roberto Alves', email: 'roberto.admin@evolution.com', role: 'Administrador', status: 'Ativo', tenantId: 'tenant-demo-1', createdAt: '2026-01-10', lastLogin: '2026-07-25 23:30', accessLevel: 'Total (Admin)' },
-      { id: 'user-2', name: 'Carlos Silva', email: 'carlos.supervisor@evolution.com', role: 'Supervisor', status: 'Ativo', tenantId: 'tenant-demo-1', createdAt: '2026-02-15', lastLogin: '2026-07-25 18:45', accessLevel: 'Gerencial' },
-      { id: 'user-3', name: 'Mariana Costa', email: 'mariana.rh@evolution.com', role: 'RH', status: 'Ativo', tenantId: 'tenant-demo-1', createdAt: '2026-03-01', lastLogin: '2026-07-24 14:10', accessLevel: 'Gerencial' },
-      { id: 'user-4', name: 'Fernanda Santos', email: 'fernanda.financeiro@evolution.com', role: 'Financeiro', status: 'Ativo', tenantId: 'tenant-demo-1', createdAt: '2026-03-12', lastLogin: '2026-07-23 09:20', accessLevel: 'Gerencial' },
-      { id: 'user-5', name: 'Paulo Oliveira', email: 'paulo.operador@evolution.com', role: 'Operador', status: 'Ativo', tenantId: 'tenant-demo-1', createdAt: '2026-04-05', lastLogin: '2026-07-22 11:05', accessLevel: 'Operacional' },
-      { id: 'user-6', name: 'João Mendes', email: 'joao.cliente@evolution.com', role: 'Cliente', status: 'Ativo', tenantId: 'tenant-demo-1', createdAt: '2026-05-18', lastLogin: '2026-07-20 16:30', accessLevel: 'Somente Leitura' },
-    ];
+    const initialUsers: User[] = [];
     localStorage.setItem(KEYS.USERS, JSON.stringify(initialUsers));
     return initialUsers;
   },

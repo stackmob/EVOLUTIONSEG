@@ -156,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             status: 'Ativo',
             createdAt: authData.user.created_at,
             accessLevel: 'Total (Admin)',
-            avatarUrl: authData.user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+            avatarUrl: authData.user.user_metadata?.avatar_url || '',
           };
 
           localStorage.setItem('evo_auth_user', JSON.stringify(loggedUser));
@@ -183,35 +183,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loggedUser = {
         id: 'usr-client-1',
         email,
-        name: 'Marcos Aurelio (Síndico Flores)',
+        name: 'Cliente Contratante',
         role: 'Cliente',
         status: 'Ativo',
-        createdAt: '2026-01-01',
+        createdAt: new Date().toISOString().split('T')[0],
         accessLevel: 'Somente Leitura',
         companyId: 'cli-1',
-        avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+        avatarUrl: '',
       };
     } else if (email.toLowerCase().includes('rh')) {
       loggedUser = {
         id: 'usr-rh-1',
         email,
-        name: 'Mariana Costa',
+        name: 'Gestor de Recursos Humanos',
         role: 'RH',
         status: 'Ativo',
-        createdAt: '2026-01-01',
+        createdAt: new Date().toISOString().split('T')[0],
         accessLevel: 'Gerencial',
-        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+        avatarUrl: '',
       };
     } else {
       loggedUser = {
         id: 'usr-1',
         email,
-        name: 'Elmaneko Admin',
+        name: email.split('@')[0] || 'Administrador',
         role: 'Administrador',
         status: 'Ativo',
-        createdAt: '2026-01-01',
+        createdAt: new Date().toISOString().split('T')[0],
         accessLevel: 'Total (Admin)',
-        avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+        avatarUrl: '',
       };
     }
 
@@ -249,7 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             status: 'Ativo',
             createdAt: new Date().toISOString().split('T')[0],
             accessLevel: 'Total (Admin)',
-            avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+            avatarUrl: '',
           };
 
           localStorage.setItem('evo_auth_user', JSON.stringify(newUser));
@@ -279,7 +279,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'Ativo',
       createdAt: new Date().toISOString().split('T')[0],
       accessLevel: 'Total (Admin)',
-      avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+      avatarUrl: '',
     };
 
     localStorage.setItem('evo_auth_user', JSON.stringify(newUser));

@@ -185,7 +185,7 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
         birthDate: formBirthDate,
         gender: formGender,
         civilStatus: formCivilStatus,
-        photoUrl: formPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        photoUrl: formPhoto || '',
         address: formAddress,
         city: formCity,
         state: formState,
@@ -226,7 +226,7 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
         birthDate: formBirthDate,
         gender: formGender,
         civilStatus: formCivilStatus,
-        photoUrl: formPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        photoUrl: formPhoto || '',
         address: formAddress,
         city: formCity,
         state: formState,
@@ -414,11 +414,17 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
                       <tr key={emp.id} className="hover:bg-blue-50/5 transition-colors duration-150">
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <img 
-                              src={emp.photoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'} 
-                              alt={emp.name} 
-                              className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                            />
+                            {emp.photoUrl ? (
+                              <img 
+                                src={emp.photoUrl} 
+                                alt={emp.name} 
+                                className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-extrabold text-xs">
+                                {emp.name ? emp.name.slice(0, 2).toUpperCase() : 'VG'}
+                              </div>
+                            )}
                             <div className="flex flex-col text-left">
                               <span className="font-bold text-xs text-gray-900 leading-tight">{emp.name}</span>
                               <span className="text-xxs text-gray-400 mt-0.5 leading-none">CPF: {emp.cpf}</span>
@@ -502,11 +508,17 @@ export const Employees: React.FC<EmployeesProps> = ({ openDetailId, setOpenDetai
               </button>
 
               <div className="flex flex-col items-center text-center border-b border-gray-100 pb-4">
-                <img 
-                  src={selectedEmp.photoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} 
-                  alt={selectedEmp.name} 
-                  className="w-18 h-18 rounded-full border-2 border-blue-600 object-cover shadow-sm mb-3"
-                />
+                {selectedEmp.photoUrl ? (
+                  <img 
+                    src={selectedEmp.photoUrl} 
+                    alt={selectedEmp.name} 
+                    className="w-18 h-18 rounded-full border-2 border-blue-600 object-cover shadow-sm mb-3"
+                  />
+                ) : (
+                  <div className="w-18 h-18 rounded-full bg-slate-100 border-2 border-blue-600 flex items-center justify-center text-slate-700 font-extrabold text-lg shadow-sm mb-3">
+                    {selectedEmp.name ? selectedEmp.name.slice(0, 2).toUpperCase() : 'VG'}
+                  </div>
+                )}
                 <h3 className="font-extrabold text-sm text-gray-900 leading-tight">{selectedEmp.name}</h3>
                 <span className="text-xxs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full uppercase mt-1">
                   {selectedEmp.role}

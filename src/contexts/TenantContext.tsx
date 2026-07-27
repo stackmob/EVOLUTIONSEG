@@ -11,86 +11,9 @@ interface TenantContextType {
   registerNewTenant: (name: string, cnpj: string, ownerName: string, ownerEmail: string, plan: SaasPlan) => void;
 }
 
-const DEFAULT_TENANTS: Tenant[] = [
-  {
-    id: 'tnt-1',
-    name: 'EvolutionSeg SP (Matriz)',
-    cnpj: '45.892.102/0001-88',
-    subdomain: 'sp-matriz',
-    plan: 'Enterprise',
-    billingCycle: 'mensal',
-    status: 'Ativo',
-    maxEmployees: 100,
-    maxClients: 50,
-    maxAssets: 200,
-    createdAt: '2025-01-10',
-    renewsAt: '2026-08-10',
-    ownerName: 'Elmaneko Admin',
-    ownerEmail: 'elmaneko3d@gmail.com',
-  },
-  {
-    id: 'tnt-2',
-    name: 'GuardSec Sul Ltda',
-    cnpj: '12.345.678/0001-99',
-    subdomain: 'guardsec-sul',
-    plan: 'Pro',
-    billingCycle: 'mensal',
-    status: 'Ativo',
-    maxEmployees: 50,
-    maxClients: 15,
-    maxAssets: 60,
-    createdAt: '2025-03-15',
-    renewsAt: '2026-08-15',
-    ownerName: 'Roberto Alencar',
-    ownerEmail: 'roberto@guardsec.com.br',
-  },
-  {
-    id: 'tnt-3',
-    name: 'Bravos Portaria & Vigilância',
-    cnpj: '98.765.432/0001-11',
-    subdomain: 'bravos-seg',
-    plan: 'Starter',
-    billingCycle: 'anual',
-    status: 'Ativo',
-    maxEmployees: 10,
-    maxClients: 3,
-    maxAssets: 15,
-    createdAt: '2025-05-20',
-    renewsAt: '2027-05-20',
-    ownerName: 'Carlos Bravos',
-    ownerEmail: 'contato@bravos.com.br',
-  }
-];
+const DEFAULT_TENANTS: Tenant[] = [];
 
-const INITIAL_INVOICES: SaasInvoice[] = [
-  {
-    id: 'inv-101',
-    tenantId: 'tnt-1',
-    invoiceNumber: 'INV-2026-007',
-    amount: 1290.00,
-    dueDate: '2026-07-10',
-    paidDate: '2026-07-08',
-    status: 'Pago',
-  },
-  {
-    id: 'inv-100',
-    tenantId: 'tnt-1',
-    invoiceNumber: 'INV-2026-006',
-    amount: 1290.00,
-    dueDate: '2026-06-10',
-    paidDate: '2026-06-09',
-    status: 'Pago',
-  },
-  {
-    id: 'inv-099',
-    tenantId: 'tnt-1',
-    invoiceNumber: 'INV-2026-005',
-    amount: 1290.00,
-    dueDate: '2026-05-10',
-    paidDate: '2026-05-10',
-    status: 'Pago',
-  },
-];
+const INITIAL_INVOICES: SaasInvoice[] = [];
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
@@ -103,7 +26,22 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [currentTenant, setCurrentTenant] = useState<Tenant>(() => {
     const savedId = localStorage.getItem('saas_current_tenant_id');
     const found = tenantsList.find(t => t.id === savedId);
-    return found || tenantsList[0];
+    return found || tenantsList[0] || {
+      id: 'tnt-default',
+      name: 'Empresa Principal',
+      cnpj: '00.000.000/0001-00',
+      subdomain: 'empresa',
+      plan: 'Pro',
+      billingCycle: 'mensal',
+      status: 'Ativo',
+      maxEmployees: 100,
+      maxClients: 50,
+      maxAssets: 200,
+      createdAt: new Date().toISOString().split('T')[0],
+      renewsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      ownerName: 'Administrador',
+      ownerEmail: 'admin@empresa.com',
+    };
   });
 
   const [invoices, setInvoices] = useState<SaasInvoice[]>(() => {
